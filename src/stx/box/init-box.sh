@@ -307,7 +307,8 @@ run_setup_scripts() {
         # appended to `log_file`, mounted at /logs — already a host bind —
         # so a failure's host-side error can point straight at a readable
         # file instead of `docker logs`.
-        su -s /bin/bash -c 'cd /workspace && exec "$0"' -- "${STX_BOX_USER}" "/workspace/${script}" \
+        su -s /bin/bash -c 'cd /workspace && export PATH="$1" && exec "$0"' \
+            -- "${STX_BOX_USER}" "/workspace/${script}" "$(_box_user_path)" \
             >>"$log_file" 2>&1 && continue
         exit_code=$?
         jq -n --arg script "$script" --argjson exit_code "$exit_code" \
@@ -329,7 +330,15 @@ _exec_as_box_user() {
     # argv element lands in "$@" inside the nested script, each as its
     # own word — never spliced into the -c command text, so a path
     # containing a quote or space can't break out of it.
-    su -s /bin/bash -c 'cd /workspace && exec "$@"' -- "${STX_BOX_USER}" stx-provision "$@"
+    su -s /bin/bash -c 'cd /workspace && export PATH="$1" && shift && exec "$@"' \
+        -- "${STX_BOX_USER}" stx-provision "$(_box_user_path)" "$@"
+}
+
+#: The image's own PATH, saved before `main` pins the system one: commands
+#: run as the box user get it back, so the image's tools (a venv, a
+#: per-user bin dir) resolve for them exactly as in an interactive shell.
+_box_user_path() {
+    printf '%s' "${_IMAGE_PATH:-$_SYSTEM_PATH}"
 }
 
 #: The box user owns a directory the image puts ahead on PATH (~/.local/bin
@@ -340,6 +349,7 @@ _exec_as_box_user() {
 _SYSTEM_PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 main() {
+    _IMAGE_PATH="$PATH"
     export PATH="$_SYSTEM_PATH"
     render_runtime_configs
     start_ulogd

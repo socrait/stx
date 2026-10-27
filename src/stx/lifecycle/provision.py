@@ -760,14 +760,7 @@ def _provision_steps_step(spec: SandboxSpec, state: ProvisionState) -> None:
     # A repo's own provisioning steps connect as the non-superuser
     # `stx_provisioner` role, never the platform admin — see
     # docs/secrets.md (Provisioning credentials).
-    provisioner = stx_platform.provisioner_params(state.db_params)
-    admin_vars = {
-        "PGHOST": provisioner.host,
-        "PGPORT": str(provisioner.port),
-        "PGUSER": provisioner.user,
-        "PGPASSWORD": provisioner.password,
-        "PGDATABASE": "postgres",
-    }
+    admin_vars = _provision_admin_vars(state.db_params)
     ret = _run_provision_steps(
         manifest,
         spec.slug,
@@ -782,6 +775,22 @@ def _provision_steps_step(spec: SandboxSpec, state: ProvisionState) -> None:
     )
     if ret:
         raise StepAlreadyReported()
+
+
+def _provision_admin_vars(
+    admin: PostgresAdminParams,
+) -> dict[str, str]:
+    """The `PROVISION_ADMIN_VARS` a provisioning run gets: the provisioner's
+    login, addressed as the box sees Postgres on the platform network — the
+    container name and its in-network port, never the host's published one."""
+    provisioner = stx_platform.provisioner_params(admin)
+    return {
+        "PGHOST": stx_platform.container_name("postgres"),
+        "PGPORT": str(stx_platform.POSTGRES_CONTAINER_PORT),
+        "PGUSER": provisioner.user,
+        "PGPASSWORD": provisioner.password,
+        "PGDATABASE": "postgres",
+    }
 
 
 def _write_route_new(spec: SandboxSpec, state: ProvisionState) -> None:
