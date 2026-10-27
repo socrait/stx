@@ -1,0 +1,17 @@
+{
+  "hasCompletedOnboarding": true,
+  "autoUpdates": false,
+  "theme": "light-ansi",
+  "tipsHistory": {
+    "new-user-warmup": 1
+  },
+  "tipLifetimeShownCounts": {
+    "new-user-warmup": 1
+  },
+  "projects": {
+    "/workspace": {
+      "hasTrustDialogAccepted": true,
+      "hasClaudeMdExternalIncludesApproved": true
+    }
+  }
+}

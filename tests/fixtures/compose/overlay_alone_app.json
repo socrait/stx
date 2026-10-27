@@ -1,0 +1,116 @@
+{
+  "name": "stx-demo",
+  "networks": {
+    "stx-net": {
+      "name": "stx-net",
+      "ipam": {},
+      "external": true
+    }
+  },
+  "services": {
+    "app": {
+      "cap_add": ["NET_ADMIN", "SETUID", "SETGID"],
+      "cap_drop": ["ALL"],
+      "command": ["sleep", "infinity"],
+      "container_name": "stx-demo--app",
+      "entrypoint": ["/bin/bash", "/opt/stx/box/init-box.sh"],
+      "environment": {
+        "ANTHROPIC_API_KEY": "fake-key",
+        "DATABASE_DB": "stx_demo",
+        "DATABASE_HOST": "stx-postgres",
+        "DATABASE_TEST_DB": "stx_demo_test",
+        "GIT_CONFIG_COUNT": "4",
+        "GIT_CONFIG_KEY_0": "commit.gpgsign",
+        "GIT_CONFIG_KEY_1": "user.name",
+        "GIT_CONFIG_KEY_2": "user.email",
+        "GIT_CONFIG_KEY_3": "push.default",
+        "GIT_CONFIG_VALUE_0": "false",
+        "GIT_CONFIG_VALUE_1": "Test Operator (sandbox)",
+        "GIT_CONFIG_VALUE_2": "test-operator@example.com",
+        "GIT_CONFIG_VALUE_3": "upstream",
+        "GIT_DIR": "/git/worktrees/demo",
+        "GIT_WORK_TREE": "/workspace",
+        "HTTPS_PROXY": "http://127.0.0.1:3128",
+        "HTTP_PROXY": "http://127.0.0.1:3128",
+        "NO_PROXY": "localhost,127.0.0.1,stx-postgres,stx-redis,stx-otel,.localhost",
+        "OTLP_ENDPOINT": "http://stx-otel:4318",
+        "PUBLIC_BASE_URL": "http://api.demo.localhost",
+        "REDIS_DB": "1",
+        "STX_FORGE_GIT_USER": "",
+        "STX_FORGE_HOST": "",
+        "STX_FORGE_TOKEN": "",
+        "STX_SLUG": "demo",
+        "STX_ZONE": "trusted",
+        "STX_BOX_SETUP": "scripts/box-init.sh",
+        "STX_BOX_USER": "devuser",
+        "STX_EGRESS_PORTS": "*/udp 443/tcp",
+        "UV_INDEX_WIDGETSHOP_PASSWORD": "",
+        "UV_INDEX_WIDGETSHOP_USERNAME": "",
+        "http_proxy": "http://127.0.0.1:3128",
+        "https_proxy": "http://127.0.0.1:3128",
+        "no_proxy": "localhost,127.0.0.1,stx-postgres,stx-redis,stx-otel,.localhost"
+      },
+      "hostname": "demo",
+      "image": "widgetshop-devbox",
+      "init": true,
+      "labels": {
+        "devcontainer.metadata": "[{\"remoteUser\": \"devuser\"}]",
+        "stx.box": "app",
+        "stx.redis_index": "1",
+        "stx.repo_root": "/repo/widgetshop",
+        "stx.slug": "demo"
+      },
+      "networks": {
+        "stx-net": null
+      },
+      "security_opt": ["no-new-privileges:true"],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/sandbox/state/demo/wt",
+          "target": "/workspace"
+        },
+        {
+          "type": "bind",
+          "source": "/repo/.git",
+          "target": "/git"
+        },
+        {
+          "type": "bind",
+          "source": "/repo/.git/config",
+          "target": "/git/config",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "/sandbox/state/drop/demo",
+          "target": "/drop"
+        },
+        {
+          "type": "bind",
+          "source": "/sandbox/state/drop-dmz/demo",
+          "target": "/drop-dmz",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "/sandbox/state/logs/demo/app",
+          "target": "/logs"
+        },
+        {
+          "type": "bind",
+          "source": "/repo/src/stx/box",
+          "target": "/opt/stx/box",
+          "read_only": true
+        },
+        {
+          "type": "bind",
+          "source": "/sandbox/state/allowlists/demo",
+          "target": "/etc/tinyproxy/allowlist",
+          "read_only": true
+        }
+      ],
+      "working_dir": "/workspace"
+    }
+  }
+}

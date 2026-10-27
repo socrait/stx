@@ -1,0 +1,11 @@
+services:
+  dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - uv-cache:/uv-cache
+
+volumes:
+  uv-cache:
+    name: stx-cache-stx--uv

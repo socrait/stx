@@ -1,0 +1,45 @@
+# Illustrative only — widgetshop is a fictional example repo (see ../app.py), not
+# something you run. It's here so this manifest's fields have something real to
+# point at; copy the parts that apply to your own repo, not the whole file.
+schema: 1
+image: widgetshop-devbox          # shared across sandboxes of this repo
+rebuild_on: [uv.lock]             # merged with the Dockerfile + its COPY/ADD sources
+                                   # (pyproject.toml is already covered there; uv.lock* is
+                                   # a glob, so it isn't picked up automatically)
+setup: [scripts/box-init.sh]      # repo-relative, run in-box from /workspace
+routes:
+  api: 8080                       # api.<slug>.localhost -> app:8080
+publish: api                      # the route published on the tailnet
+branch: "feat/{user}/{slug}"      # default push target; --branch overrides
+platform:                         # shared services this repo uses; each omitted one never starts
+  postgres:
+    databases: ["{db}", "{db}_test"]   # created by provision, dropped by rm
+  redis: true                          # allocate a Redis db index
+  otel: true                           # OTLP collector at stx-otel:4318
+provision:                        # one-shot `compose run --rm <box>`, in order
+  steps:
+    - [bash, scripts/provision-roles.sh]
+    - [python, -m, widgetshop.scripts.create, --database, "{db}"]
+    - [python, -m, widgetshop.scripts.create, --database, "{db}_test"]
+    - [python, -m, widgetshop.scripts.migrate, --database, "{db}"]
+  env:                             # only these reach the one-shot run; ${NAME} = admin var or host env
+    DATABASE_USER: "${PGUSER}"
+    DATABASE_PASSWORD: "${PGPASSWORD}"
+env:                               # rendered into the box service's environment
+  DATABASE_DB: "{db}"
+  DATABASE_TEST_DB: "{db}_test"
+  DATABASE_HOST: stx-postgres
+  REDIS_DB: "{redis_index}"
+  OTLP_ENDPOINT: http://stx-otel:4318
+  PUBLIC_BASE_URL: "http://api.{slug}.localhost"
+egress:
+  hosts:                          # plain hostname -> ^escaped$; "~<regex>" taken verbatim
+                                   # (stx adds the harness hosts and the forge host itself)
+    - pypi.org
+    - files.pythonhosted.org
+  ports: ["*/udp"]                 # box user only, bypassing the proxy — see security.md
+forge:
+  kind: gitlab
+  project: widgetshop/widgetshop
+  package_registry:               # optional: read-only package token for the box
+    env: {username: UV_INDEX_WIDGETSHOP_USERNAME, password: UV_INDEX_WIDGETSHOP_PASSWORD}

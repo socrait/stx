@@ -1,0 +1,12 @@
+[project]
+name = "widgetshop"
+version = "0.1.0"
+description = "Fictional example repo used by stx's docs and test suite — not a real product."
+requires-python = ">=3.12"
+dependencies = [
+    "flask~=3.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

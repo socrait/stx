@@ -1,0 +1,86 @@
+[project]
+name = "stx"
+version = "0.1.0"
+description = "Disposable, egress-limited dev/agent sandboxes for a git repo."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Socrait, PBC" }]
+requires-python = ">=3.12"
+keywords = [
+    "sandbox",
+    "docker",
+    "devcontainer",
+    "coding-agent",
+    "claude-code",
+    "egress",
+    "security",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    "psycopg[binary]>=3.2,<4",
+    "pyyaml>=6.0,<7",
+    "redis>=5.2,<6",
+    "tomlkit>=0.13,<1",
+]
+
+[project.urls]
+Homepage = "https://github.com/socrait/stx"
+Repository = "https://github.com/socrait/stx"
+Issues = "https://github.com/socrait/stx/issues"
+
+[dependency-groups]
+dev = [
+    "pytest~=8.3.4",
+    "ruff==0.14.10",
+]
+
+[tool.ruff]
+line-length = 88 # match Black's default
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E402", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[project.scripts]
+stx = "stx.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stx"]
+artifacts = ["src/stx/box/*"]
+exclude = ["src/stx/skill"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"skills/stx/SKILL.md" = "stx/skill/SKILL.md"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = '-vv --capture=tee-sys --show-capture=all -m "not docker and not build"'
+markers = [
+    "docker: requires a real Docker daemon and docker compose (opt-in: pytest -m docker)",
+    "build: runs a real `uv build` (opt-in: pytest -m build)",
+]

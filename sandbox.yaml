@@ -1,0 +1,13 @@
+schema: 1
+# name, image, and rebuild_on default from the repo (the compose file's
+# sole service, stx-<repo>-<hash>, the Dockerfile + what it COPY/ADDs) —
+# override any of them here only if the default is wrong for this repo.
+compose: .devcontainer/compose.yaml
+
+setup: [.devcontainer/setup.sh]  # uv sync, as the box user
+# publish: <route>  # names the route published on the tailnet; omit for none
+
+egress:
+  hosts: [pypi.org, files.pythonhosted.org]
+
+# see docs/manifest.md for the full field list (platform, provision, env, publish, forge)

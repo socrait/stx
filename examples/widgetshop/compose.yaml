@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    environment:
+      WIDGETSHOP_ENV: local
+    volumes:
+      - widgetshop-cache:/home/devuser/.cache
+
+volumes:
+  widgetshop-cache:

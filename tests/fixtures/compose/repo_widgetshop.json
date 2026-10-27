@@ -1,0 +1,35 @@
+{
+  "name": "widgetshop",
+  "networks": {
+    "default": {
+      "name": "widgetshop_default"
+    }
+  },
+  "services": {
+    "app": {
+      "build": {
+        "context": "/repo/widgetshop",
+        "dockerfile": ".devcontainer/Dockerfile"
+      },
+      "environment": {
+        "WIDGETSHOP_ENV": "local"
+      },
+      "networks": {
+        "default": null
+      },
+      "volumes": [
+        {
+          "source": "widgetshop-cache",
+          "target": "/home/devuser/.cache",
+          "type": "volume",
+          "volume": {}
+        }
+      ]
+    }
+  },
+  "volumes": {
+    "widgetshop-cache": {
+      "name": "widgetshop_widgetshop-cache"
+    }
+  }
+}

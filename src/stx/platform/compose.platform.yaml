@@ -1,0 +1,117 @@
+# Platform singleton services — see docs/reference.md (Platform services on demand).
+# Override STX_POSTGRES_USER / STX_POSTGRES_PORT / STX_REDIS_USER /
+# STX_REDIS_APP_USER / STX_REDIS_PORT in the secret source to avoid
+# conflicts with another instance on the same machine.
+
+name: stx
+
+# stx creates stx-net itself (network.ensure_network, before `compose up`
+# ever runs) so a sandbox's own network can attach platform services to it
+# even when no platform service is up yet — external here, so Compose
+# doesn't also try to own/manage it and warn that it didn't create it.
+networks:
+  stx-net:
+    external: true
+
+volumes:
+  stx-postgres-data:
+    name: stx-postgres-data
+  stx-redis-data:
+    name: stx-redis-data
+
+services:
+  postgres:
+    image: postgres:16.14
+    container_name: stx-postgres
+    restart: unless-stopped
+    labels:
+      stx.definition_hash: ${STX_POSTGRES_DEFINITION_HASH:-}
+    environment:
+      POSTGRES_USER: ${STX_POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${STX_POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    ports:
+      - target: 5432
+        published: "${STX_POSTGRES_PORT:-5432}"
+        host_ip: 127.0.0.1
+    volumes:
+      - stx-postgres-data:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    networks:
+      - stx-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  traefik:
+    image: traefik:v3.7.6
+    container_name: stx-traefik
+    restart: unless-stopped
+    labels:
+      stx.definition_hash: ${STX_TRAEFIK_DEFINITION_HASH:-}
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+      # Traefik's file provider watches this dir and hot-reloads on change.
+      # Long syntax: older Compose can't split the short form's colons
+      # without interpolating first (`config --no-interpolate`).
+      - type: bind
+        source: ${TRAEFIK_ROUTES_PATH:-./routes}
+        target: /routes
+        read_only: true
+        bind:
+          create_host_path: true
+    networks:
+      - stx-net
+    # Needed on Linux so its route files' `host.docker.internal` resolves —
+    # see docs/security.md (Isolation between sandboxes). Docker Desktop
+    # (macOS, Windows) resolves it without this, but the entry is harmless there.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  otel:
+    image: otel/opentelemetry-collector-contrib:0.133.0
+    container_name: stx-otel
+    restart: unless-stopped
+    labels:
+      stx.definition_hash: ${STX_OTEL_DEFINITION_HASH:-}
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./config.metrics.local.yaml:/etc/otelcol-contrib/config.yaml:ro
+    networks:
+      - stx-net
+    # No healthcheck: image is distroless (no shell/wget). compose --wait treats
+    # services without a healthcheck as ready once the container is running.
+
+  redis:
+    image: redis:7.2.14
+    container_name: stx-redis
+    restart: unless-stopped
+    labels:
+      stx.definition_hash: ${STX_REDIS_DEFINITION_HASH:-}
+    # Generates /tmp/users.acl from env vars — Compose can't substitute inside mounted files.
+    entrypoint: ["/bin/sh", "/usr/local/etc/redis/redis-entrypoint.sh"]
+    environment:
+      REDIS_USERNAME: ${STX_REDIS_USER:-admin}
+      REDIS_PASSWORD: ${STX_REDIS_PASSWORD}
+      REDIS_APP_USERNAME: ${STX_REDIS_APP_USER:-app}
+      REDIS_APP_PASSWORD: ${STX_REDIS_APP_PASSWORD}
+    ports:
+      - target: 6379
+        published: "${STX_REDIS_PORT:-6379}"
+        host_ip: 127.0.0.1
+    volumes:
+      - stx-redis-data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./redis-entrypoint.sh:/usr/local/etc/redis/redis-entrypoint.sh:ro
+    networks:
+      - stx-net
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --user $$REDIS_APP_USERNAME -a $$REDIS_APP_PASSWORD --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

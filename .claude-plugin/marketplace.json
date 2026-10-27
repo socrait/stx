@@ -1,0 +1,14 @@
+{
+  "name": "stx",
+  "owner": { "name": "Socrait, PBC" },
+  "metadata": {
+    "description": "Agent tooling for stx, the sandbox dev/agent box CLI."
+  },
+  "plugins": [
+    {
+      "name": "stx",
+      "source": "./plugins/stx",
+      "description": "Host-side skill for provisioning, dispatching into, and tearing down stx sandboxes."
+    }
+  ]
+}

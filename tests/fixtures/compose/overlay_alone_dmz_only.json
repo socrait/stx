@@ -1,0 +1,56 @@
+{
+  "name": "stx-demo",
+  "networks": {
+    "dmz-net": {
+      "name": "stx-demo_dmz-net",
+      "ipam": {}
+    }
+  },
+  "services": {
+    "dmz": {
+      "cap_add": ["NET_ADMIN", "SETUID", "SETGID"],
+      "cap_drop": ["ALL"],
+      "command": ["sleep", "infinity"],
+      "container_name": "stx-demo--dmz",
+      "entrypoint": ["/bin/bash", "/opt/stx/box/init-box.sh"],
+      "environment": {
+        "ANTHROPIC_API_KEY": "dmz-fake-key",
+        "ENVIRONMENT": "local",
+        "STX_SLUG": "demo",
+        "STX_ZONE": "dmz",
+        "STX_BOX_USER": "devuser"
+      },
+      "hostname": "demo-dmz",
+      "image": "widgetshop-devbox",
+      "init": true,
+      "labels": {
+        "devcontainer.metadata": "[{\"remoteUser\": \"devuser\"}]",
+        "stx.box": "dmz",
+        "stx.slug": "demo"
+      },
+      "networks": {
+        "dmz-net": null
+      },
+      "security_opt": ["no-new-privileges:true"],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/sandbox/state/drop-dmz/demo",
+          "target": "/drop"
+        },
+        {
+          "type": "bind",
+          "source": "/sandbox/state/logs/demo/dmz",
+          "target": "/logs"
+        },
+        {
+          "type": "bind",
+          "source": "/repo/src/stx/box",
+          "target": "/opt/stx/box",
+          "read_only": true
+        }
+      ],
+      "working_dir": "/workspace"
+    }
+  }
+}
