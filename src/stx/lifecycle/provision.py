@@ -766,6 +766,7 @@ def _provision_steps_step(spec: SandboxSpec, state: ProvisionState) -> None:
         "PGPORT": str(provisioner.port),
         "PGUSER": provisioner.user,
         "PGPASSWORD": provisioner.password,
+        "PGDATABASE": "postgres",
     }
     ret = _run_provision_steps(
         manifest,
@@ -1030,9 +1031,10 @@ def _run_provision_steps(
     docs/manifest.md (`provision`) for the idempotency contract this relies
     on to run unconditionally on every `stx new`. `compose_env` is the base
     process environment (see docs/secrets.md; defaults to `base_env()` for
-    callers outside `new`'s own flow) — `provision.env`'s rendered overrides
-    ride on top of it. `admin_vars` is the platform Postgres connection
-    `stx` itself supplies (PGHOST/PGPORT/PGUSER/PGPASSWORD). `host_vars` is
+    callers outside `new`'s own flow). `admin_vars` is the provisioning
+    connection `stx` itself supplies (`PROVISION_ADMIN_VARS`), set in every
+    run over the box's own values; `provision.env`'s rendered entries ride on
+    top of both. `host_vars` is
     the repo's own compose file's referenced variables (see
     `compose_variables`) — `provision.env` may only resolve a host var
     already in this set, and its value comes from `secret_env` (the loaded
@@ -1048,8 +1050,9 @@ def _run_provision_steps(
         print(f"error: {e}", file=sys.stderr)
         return 1
     base = dict(compose_env) if compose_env is not None else base_env()
+    run_env = {**admin_vars, **provision_env}
     # `compose run` passes a process variable into the container only when named.
-    pass_through = [arg for name in provision_env for arg in ("-e", name)]
+    pass_through = [arg for name in run_env for arg in ("-e", name)]
     for argv in manifest.render_provision_steps(
         slug=slug, redis_index=redis_index, links=links
     ):
@@ -1065,7 +1068,7 @@ def _run_provision_steps(
                 manifest.name,
                 *argv,
             ),
-            env={**base, **provision_env},
+            env={**base, **run_env},
             cwd=str(root),
         )
         if result.returncode != 0:

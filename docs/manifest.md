@@ -124,7 +124,7 @@ itself.
 | Key | Meaning |
 |---|---|
 | `steps` | A list of steps, each a bare argv list, e.g. `[python, manage.py, migrate]`. Steps run in order; each must be idempotent, since every `stx new` runs them again, including on a reused slug whose databases survived `stx rm --keep-db`. |
-| `env` | A map of environment variable name → value, reaching only the provision run — not the box's own long-lived environment. A value may reference `${NAME}`: either the platform Postgres connection `stx` itself supplies (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` — libpq's own names, bound to the non-superuser `stx_provisioner` role, never the platform admin; see [secrets.md](secrets.md#provisioning-credentials)) or a host environment variable the repo's own compose file already references, pulled after the secret source has loaded. A `${NAME}` naming one of `stx`'s own reserved names (`STX_`/`SANDBOX_`/`GIT_`-prefixed, or a proxy variable — see [box-contract.md](box-contract.md#box-environment)) is refused at manifest load. |
+| `env` | A map of environment variable name → value, reaching only the provision run — not the box's own long-lived environment. A value may reference `${NAME}`: either the provisioning Postgres connection `stx` itself sets in every provision run (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` — libpq's own names, bound to the non-superuser `stx_provisioner` role, never the platform admin; see [secrets.md](secrets.md#provisioning-credentials)) or a host environment variable the repo's own compose file already references, pulled after the secret source has loaded. A `${NAME}` naming one of `stx`'s own reserved names (`STX_`/`SANDBOX_`/`GIT_`-prefixed, or a proxy variable — see [box-contract.md](box-contract.md#box-environment)) is refused at manifest load. |
 
 ### `env` (optional)
 
@@ -201,8 +201,8 @@ above is a load-time error naming the manifest key and the bad token — never a
 `ValueError`/`AttributeError`, and never deferred until whatever command first happens to
 render that key.
 
-`${NAME}` inside `provision.env` values reads `stx`'s own platform-admin vars (`PGHOST`,
-`PGPORT`, `PGUSER`, `PGPASSWORD`) or the host process environment after the secret source has
+`${NAME}` inside `provision.env` values reads `stx`'s own provisioning vars (`PGHOST`,
+`PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`) or the host process environment after the secret source has
 loaded; nothing else in the manifest reads host environment variables. This is a separate,
 unrelated grammar — `provision.env` values are not run through the `{...}` substituter above.
 
@@ -273,7 +273,7 @@ platform:
   otel: true
 provision:
   steps:
-    - [bash, scripts/provision-roles.sh]
+    - [bash, scripts/box-provision.sh]
     - [python, -m, widgetshop.scripts.create, --database, "{db}"]
     - [python, -m, widgetshop.scripts.create, --database, "{db}_test"]
     - [python, -m, widgetshop.scripts.migrate, --database, "{db}"]

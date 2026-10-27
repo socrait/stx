@@ -61,7 +61,7 @@ class TestWidgetshopManifest:
     def test_render_provision_steps(self):
         manifest = Manifest.load(_WIDGETSHOP)
         steps = manifest.render_provision_steps(slug="fix-447", redis_index=3)
-        assert steps[0] == ["bash", "scripts/provision-roles.sh"]
+        assert steps[0] == ["bash", "scripts/box-provision.sh"]
         assert "stx_fix_447" in steps[1]
 
     def test_branch_for(self):
@@ -69,7 +69,7 @@ class TestWidgetshopManifest:
         assert manifest.branch_for("fix-447", "alex") == "feat/alex/fix-447"
 
     def test_referenced_scripts_exist_and_are_executable(self):
-        for rel in ("scripts/box-init.sh", "scripts/provision-roles.sh"):
+        for rel in ("scripts/box-init.sh", "scripts/box-provision.sh"):
             path = _WIDGETSHOP / rel
             assert path.is_file()
             assert path.stat().st_mode & 0o111

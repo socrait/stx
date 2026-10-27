@@ -18,7 +18,7 @@ platform:                         # shared services this repo uses; each omitted
   otel: true                           # OTLP collector at stx-otel:4318
 provision:                        # one-shot `compose run --rm <box>`, in order
   steps:
-    - [bash, scripts/provision-roles.sh]
+    - [bash, scripts/box-provision.sh]
     - [python, -m, widgetshop.scripts.create, --database, "{db}"]
     - [python, -m, widgetshop.scripts.create, --database, "{db}_test"]
     - [python, -m, widgetshop.scripts.migrate, --database, "{db}"]

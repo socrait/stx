@@ -468,14 +468,17 @@ class TestRunProvisionSteps:
         assert compose_calls[0][0][-4:] == ["bash", "x.sh", "--db", "stx_my_slug"]
         assert compose_calls[0][1]["DATABASE_USER"] == "platform-admin"
         assert compose_calls[0][1]["OTHER_SECRET"] == "app-secret"
+        assert compose_calls[0][1]["PGUSER"] == "platform-admin"
         run_args = compose_calls[0][0]
         assert "STX_PROVISION_RUN=1" in run_args
         box_at = run_args.index("app", run_args.index("run"))
-        assert sorted(run_args[box_at - 4 : box_at]) == [
+        assert sorted(run_args[box_at - 6 : box_at]) == [
+            "-e",
             "-e",
             "-e",
             "DATABASE_USER",
             "OTHER_SECRET",
+            "PGUSER",
         ]
         assert compose_calls[1][0][-2:] == ["bash", "y.sh"]
 
