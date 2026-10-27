@@ -129,7 +129,8 @@ itself.
 ### `env` (optional)
 
 A map rendered into the box service's own environment at every start, using the template
-variables below. Names starting `STX_`, `SANDBOX_` or `GIT_`, and the proxy variables, are
+variables below. It overrides the platform connection variables `stx` sets itself (`PGHOST`,
+`PGPORT`, `PGDATABASE` — see [box-contract.md](box-contract.md#platform-services)). Names starting `STX_`, `SANDBOX_` or `GIT_`, and the proxy variables, are
 reserved and refused: see [box-contract.md](box-contract.md#box-environment).
 
 ### `egress` (optional)
@@ -283,7 +284,6 @@ provision:
 env:
   DATABASE_DB: "{db}"
   DATABASE_TEST_DB: "{db}_test"
-  DATABASE_HOST: stx-postgres
   REDIS_DB: "{redis_index}"
   OTLP_ENDPOINT: http://stx-otel:4318
   PUBLIC_BASE_URL: "http://api.{slug}.localhost"
