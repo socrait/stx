@@ -27,6 +27,14 @@ def state_root() -> Path:
     return path
 
 
+def state_root_origin() -> str:
+    """Which setting decided `state_root`: the variable's name, or `default`."""
+    for name in ("STX_STATE_ROOT", "XDG_STATE_HOME"):
+        if os.environ.get(name):
+            return name
+    return "default"
+
+
 def repo_git_dir(root: Path) -> Path:
     """The main repo's .git dir — when root is a worktree, root/.git is a
     file, not a dir, which Docker can't bind-mount."""

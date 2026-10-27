@@ -146,6 +146,7 @@ and how `stx` loads them.
 | `stx prune` | Clean up zombie sandboxes and orphaned branches |
 | `stx up` / `stx down` | Start or stop shared platform services |
 | `stx config get\|set\|unset\|list` | Manage per-human settings |
+| `stx paths [NAME] [--slug SLUG]` | Print where stx keeps config, secrets and state |
 | `stx doctor` | Check the local setup |
 | `stx guide` | Print the host skill guide standalone (no repo, no plugin) |
 

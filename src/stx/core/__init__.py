@@ -101,6 +101,7 @@ from .paths import (
     logs_root,
     repo_git_dir,
     state_root,
+    state_root_origin,
     worktree_path,
 )
 from .registry import (
@@ -293,6 +294,7 @@ __all__ = [
     "sandbox_network_name",
     "save_registry",
     "state_root",
+    "state_root_origin",
     "teardown_env",
     "traefik_router_name",
     "traefik_routes_dir",

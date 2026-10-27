@@ -1,6 +1,6 @@
 [project]
 name = "stx"
-version = "0.1.0"
+version = "0.1.1"
 description = "Disposable, egress-limited dev/agent sandboxes for a git repo."
 readme = "README.md"
 license = "MIT"

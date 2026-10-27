@@ -1,6 +1,6 @@
 {
   "name": "stx",
   "description": "Host-side skill for driving stx sandboxes — provision, dispatch, read results, tear down.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": { "name": "Socrait, PBC" }
 }
