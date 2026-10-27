@@ -124,12 +124,13 @@ itself.
 | Key | Meaning |
 |---|---|
 | `steps` | A list of steps, each a bare argv list, e.g. `[python, manage.py, migrate]`. Steps run in order; each must be idempotent, since every `stx new` runs them again, including on a reused slug whose databases survived `stx rm --keep-db`. |
-| `env` | A map of environment variable name → value, reaching only the provision run — not the box's own long-lived environment. A value may reference `${NAME}`: either the platform Postgres connection `stx` itself supplies (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` — libpq's own names, bound to the non-superuser `stx_provisioner` role, never the platform admin; see [secrets.md](secrets.md#provisioning-credentials)) or a host environment variable the repo's own compose file already references, pulled after the secret source has loaded. A `${NAME}` naming one of `stx`'s own reserved names (`STX_`/`SANDBOX_`/`GIT_`-prefixed, or a proxy variable — see [box-contract.md](box-contract.md#box-environment)) is refused at manifest load. |
+| `env` | A map of environment variable name → value, reaching only the provision run — not the box's own long-lived environment. A value may reference `${NAME}`: either the provisioning Postgres connection `stx` itself sets in every provision run (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` — libpq's own names, bound to the non-superuser `stx_provisioner` role, never the platform admin; see [secrets.md](secrets.md#provisioning-credentials)) or a host environment variable the repo's own compose file already references, pulled after the secret source has loaded. A `${NAME}` naming one of `stx`'s own reserved names (`STX_`/`SANDBOX_`/`GIT_`-prefixed, or a proxy variable — see [box-contract.md](box-contract.md#box-environment)) is refused at manifest load. |
 
 ### `env` (optional)
 
 A map rendered into the box service's own environment at every start, using the template
-variables below. Names starting `STX_`, `SANDBOX_` or `GIT_`, and the proxy variables, are
+variables below. It overrides the platform connection variables `stx` sets itself (`PGHOST`,
+`PGPORT`, `PGDATABASE` — see [box-contract.md](box-contract.md#platform-services)). Names starting `STX_`, `SANDBOX_` or `GIT_`, and the proxy variables, are
 reserved and refused: see [box-contract.md](box-contract.md#box-environment).
 
 ### `egress` (optional)
@@ -201,8 +202,8 @@ above is a load-time error naming the manifest key and the bad token — never a
 `ValueError`/`AttributeError`, and never deferred until whatever command first happens to
 render that key.
 
-`${NAME}` inside `provision.env` values reads `stx`'s own platform-admin vars (`PGHOST`,
-`PGPORT`, `PGUSER`, `PGPASSWORD`) or the host process environment after the secret source has
+`${NAME}` inside `provision.env` values reads `stx`'s own provisioning vars (`PGHOST`,
+`PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`) or the host process environment after the secret source has
 loaded; nothing else in the manifest reads host environment variables. This is a separate,
 unrelated grammar — `provision.env` values are not run through the `{...}` substituter above.
 
@@ -273,7 +274,7 @@ platform:
   otel: true
 provision:
   steps:
-    - [bash, scripts/provision-roles.sh]
+    - [bash, scripts/box-provision.sh]
     - [python, -m, widgetshop.scripts.create, --database, "{db}"]
     - [python, -m, widgetshop.scripts.create, --database, "{db}_test"]
     - [python, -m, widgetshop.scripts.migrate, --database, "{db}"]
@@ -283,7 +284,6 @@ provision:
 env:
   DATABASE_DB: "{db}"
   DATABASE_TEST_DB: "{db}_test"
-  DATABASE_HOST: stx-postgres
   REDIS_DB: "{redis_index}"
   OTLP_ENDPOINT: http://stx-otel:4318
   PUBLIC_BASE_URL: "http://api.{slug}.localhost"

@@ -1,3 +1,5 @@
+from importlib.metadata import version
+
 import pytest
 
 from stx.cli import main
@@ -51,3 +53,13 @@ def test_dry_run_is_rejected_where_it_would_be_ignored(command, monkeypatch, cap
         main()
     assert exc_info.value.code == 2
     assert "--dry-run" in capsys.readouterr().err
+
+
+def test_version_flag_prints_package_version(monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["stx", "--version"])
+
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 0
+    assert capsys.readouterr().out == f"stx {version('stx')}\n"

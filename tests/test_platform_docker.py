@@ -233,7 +233,7 @@ class TestProvisionerRole:
     (CREATEDB CREATEROLE) — these confirm it's sufficient for the
     create-roles-and-grant-on-its-databases pattern a repo's own
     `provision.steps` need (e.g. the widgetshop example's
-    scripts/provision-roles.sh), and that it stays bounded to roles it
+    scripts/box-provision.sh), and that it stays bounded to roles it
     itself created (Postgres 16 semantics) — see docs/secrets.md
     (Provisioning credentials)."""
 

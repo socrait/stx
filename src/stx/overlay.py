@@ -261,6 +261,21 @@ def box_secret_env(
     return env
 
 
+def _postgres_env(manifest: Manifest, databases: tuple[str, ...]) -> dict[str, str]:
+    """libpq's own connection variables for a repo using the platform
+    Postgres — where it is and which database is the box's own; the role and
+    password stay the repo's. See docs/box-contract.md (Platform services)."""
+    if manifest.platform.postgres is None:
+        return {}
+    env = {
+        "PGHOST": stx_platform.container_name("postgres"),
+        "PGPORT": str(stx_platform.POSTGRES_CONTAINER_PORT),
+    }
+    if databases:
+        env["PGDATABASE"] = databases[0]
+    return env
+
+
 def _app_service(
     slug: str,
     manifest: Manifest,
@@ -336,7 +351,7 @@ def _app_service(
             f"manifest `env` sets {', '.join(overridden)}, which stx sets itself "
             "to confine the box; remove them from `env`"
         )
-    env = {**repo_env, **owned}
+    env = {**_postgres_env(manifest, databases), **repo_env, **owned}
 
     git_dir = repo_git_dir(repo_root)
     _ensure_git_rw_dirs(git_dir, slug)

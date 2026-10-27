@@ -128,9 +128,12 @@ with one live credential and no record of the other half ever having existed.
 ### Provisioning credentials
 
 Each `provision.steps` run gets a Postgres connection directly from `stx` — `PGHOST`,
-`PGPORT`, `PGUSER`, `PGPASSWORD` (libpq's own names) — never from the host secret source,
-since no secret source sets the platform's own admin credentials; a manifest referencing one
-of these via `provision.env`'s `${NAME}` needs nothing loaded for it. These bind to
+`PGPORT`, `PGUSER`, `PGPASSWORD`, and `PGDATABASE=postgres` (libpq's own names) — set in the
+run's environment over any the box's own environment defines, so a bare `psql` in a step
+connects as the provisioner. They never come from the host secret source, since no secret
+source sets the platform's own credentials; a manifest referencing one of these via
+`provision.env`'s `${NAME}` (to rename it for a tool that reads other names) needs nothing
+loaded for it. These bind to
 `stx_provisioner`, a per-platform role `stx` itself creates (idempotent, on `stx up`/`new`,
 alongside the admin setup) with `CREATEDB CREATEROLE` only — never the platform admin
 (superuser). Postgres 16 restricts `CREATEROLE` to administering only roles the grantee

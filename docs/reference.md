@@ -27,6 +27,7 @@ secret source, and no Docker socket of its own — manage sandboxes from the hos
 | `up [service...]` | `--recreate`, `-y`/`--yes` | Start shared platform services. No args starts everything; naming one or more services starts only those. Never recreates a running one — a service that's drifted from its own compose definition is left alone and reported, not fixed. `--recreate` is the only path that recreates a drifted service; it refuses while a sandbox using one has an agent dispatch in progress, unless `-y`/`--yes` is also passed. |
 | `down` | `-f`/`--force` | Stop the platform. Refuses while any sandbox has a trusted box running, unless `--force`. |
 | `config get\|set\|unset\|list` | | Manage per-human settings (below). |
+| `paths [NAME]` | `--slug SLUG` | Print where `stx` keeps things, resolved for this shell's environment. No argument lists the machine-wide paths — `state`, `config`, `dotenv`, `platform`, `routes` — each with the setting that decided it (`STX_STATE_ROOT`, `XDG_STATE_HOME`, `secrets.dotenv.path`, `default`, …); `--slug` lists one sandbox's instead — `worktree`, `drop`, `drop-dmz`, `code-dmz`, `logs`, `compose`, `allowlist` — whether or not that sandbox exists. Naming one prints just its path, for scripts: `stx paths state`, `stx paths --slug demo worktree`. |
 | `doctor` | | Report-only: git-identity provenance, hazardous universal git config, user config, dotenv file permissions, Compose version, and (inside a repo with a manifest) image requirements. |
 | `guide` | `--raw` | Print the host skill guide standalone — no repo checkout or Claude Code plugin required. No flag prints the skill body only; `--raw` prints the whole file, frontmatter included. Warns, same as `ls`, when any sandbox's forge tokens expire within 24h. |
 
@@ -68,7 +69,7 @@ path when the resolved root carries no `sandbox.yaml`.
 ## State layout (XDG)
 
 Runtime state lives under `$XDG_STATE_HOME/stx/` (default `~/.local/state/stx/`; override
-with `STX_STATE_ROOT`). Nothing here is a cache — worktrees and handoff dirs hold real work,
+with `STX_STATE_ROOT`); `stx paths state` prints the resolved one. Nothing here is a cache — worktrees and handoff dirs hold real work,
 and the registry tracks live containers, databases, and Redis indexes — so none of it is
 safe to delete casually.
 

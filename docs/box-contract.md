@@ -87,6 +87,25 @@ reservation. Reserved names:
 - the overlay sets every variable the entrypoint reads, and refuses to render if the
   manifest's `env` names one of them, so no repo value can win a merge.
 
+## Platform services
+
+A box whose manifest declares `platform.postgres` gets libpq's own connection variables, so
+`psql`, `pg_dump` and any libpq-based client reach the platform Postgres with no repo
+configuration:
+
+| Variable | Value |
+|---|---|
+| `PGHOST` | `stx-postgres` |
+| `PGPORT` | `5432`, the port inside the platform network (`STX_POSTGRES_PORT` moves only the host-published one) |
+| `PGDATABASE` | the first of `platform.postgres.databases`, rendered — the box's own database |
+
+The role and its password are the repo's: it creates them in `provision` and sets `PGUSER`/
+`PGPASSWORD` itself, if it wants them. The manifest's `env` overrides any of the three (for
+example, to point a bare `psql` at the test database). These are set by the overlay, so a
+value for one of them in the repo compose file's `environment` is overridden. Provision runs
+get a different set, bound to the provisioning role — see
+[secrets.md](secrets.md#provisioning-credentials).
+
 ## The post-merge check
 
 Belt-and-suspenders against a compose-merge surprise: after generating the overlay, `stx`

@@ -381,6 +381,54 @@ class TestRenderBoxOnly:
         assert env["CLAUDE_CODE_OAUTH_TOKEN"] == "${STX_CLAUDE_OAUTH_TOKEN}"
         assert "ANTHROPIC_API_KEY" not in env
 
+    def _app_env(self, manifest, tmp_path, monkeypatch, **kwargs) -> dict:
+        monkeypatch.setenv("STX_STATE_ROOT", str(tmp_path / "state"))
+        path = overlay.render(
+            "demo",
+            manifest,
+            user="devuser",
+            worktree=tmp_path / "wt",
+            repo_root=_WIDGETSHOP,
+            redis_index=3,
+            **kwargs,
+        )
+        return json.loads(path.read_text())["services"]["app"]["environment"]
+
+    def test_postgres_repo_gets_libpq_address_and_own_database(
+        self, manifest, tmp_path, monkeypatch
+    ):
+        env = self._app_env(
+            manifest, tmp_path, monkeypatch, databases=("stx_demo", "stx_demo_test")
+        )
+
+        assert env["PGHOST"] == "stx-postgres"
+        assert env["PGPORT"] == "5432"
+        assert env["PGDATABASE"] == "stx_demo"
+        assert "PGUSER" not in env
+        assert "PGPASSWORD" not in env
+
+    def test_manifest_env_overrides_the_libpq_defaults(
+        self, manifest, tmp_path, monkeypatch
+    ):
+        custom = dataclasses.replace(
+            manifest, env={**manifest.env, "PGDATABASE": "{db}_test"}
+        )
+
+        env = self._app_env(custom, tmp_path, monkeypatch, databases=("stx_demo",))
+
+        assert env["PGDATABASE"] == "stx_demo_test"
+
+    def test_repo_without_postgres_gets_no_libpq_vars(
+        self, manifest, tmp_path, monkeypatch
+    ):
+        no_postgres = dataclasses.replace(
+            manifest, platform=dataclasses.replace(manifest.platform, postgres=None)
+        )
+
+        env = self._app_env(no_postgres, tmp_path, monkeypatch)
+
+        assert not {"PGHOST", "PGPORT", "PGDATABASE"} & set(env)
+
     def test_no_tailnet_port_omits_ports(self, manifest, tmp_path, monkeypatch):
         monkeypatch.setenv("STX_STATE_ROOT", str(tmp_path / "state"))
         path = overlay.render(

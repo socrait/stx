@@ -1,5 +1,6 @@
 import argparse
 import sys
+from importlib.metadata import version
 from typing import Dict, Type
 
 from .command import Command
@@ -16,6 +17,7 @@ from .commands.logs import SandboxLogsCommand
 from .commands.ls import SandboxLsCommand
 from .commands.new import SandboxNewCommand
 from .commands.open import SandboxOpenCommand
+from .commands.paths import SandboxPathsCommand
 from .commands.prune import SandboxPruneCommand
 from .commands.rebuild import SandboxRebuildCommand
 from .commands.refresh import SandboxRefreshCommand
@@ -58,6 +60,7 @@ def get_commands() -> list[Type[Command]]:
         SandboxStartCommand,
         SandboxCodeCommand,
         SandboxConfigCommand,
+        SandboxPathsCommand,
         SandboxHostsCommand,
         SandboxInitCommand,
         SandboxOpenCommand,
@@ -78,6 +81,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="stx - sandbox dev/agent boxes",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {version('stx')}"
     )
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 

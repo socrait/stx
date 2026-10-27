@@ -61,10 +61,10 @@ COMPOSE_LOOKUP_ORDER = (
 
 _FORGE_KINDS = ("gitlab",)
 
-#: Names `stx` supplies to every provisioning run itself (libpq's own names
-#: for the platform admin connection) — never pulled from the host secret
-#: source, so a manifest referencing one needs nothing loaded for it.
-PROVISION_ADMIN_VARS = ("PGHOST", "PGPORT", "PGUSER", "PGPASSWORD")
+#: Names `stx` sets in every provisioning run itself (libpq's own names for
+#: the provisioning connection) — never pulled from the host secret source, so
+#: a manifest referencing one needs nothing loaded for it.
+PROVISION_ADMIN_VARS = ("PGHOST", "PGPORT", "PGUSER", "PGPASSWORD", "PGDATABASE")
 
 _COPY_ADD_RE = re.compile(r"^(COPY|ADD)\s+(.*)$", re.IGNORECASE)
 

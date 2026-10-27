@@ -64,6 +64,11 @@ ALL_SERVICES = ("traefik", "postgres", "redis", "otel")
 NETWORK = PLATFORM_NETWORK
 
 
+#: The port Postgres listens on inside the platform network (the compose
+#: file's `target`); `STX_POSTGRES_PORT` only moves the host-published one.
+POSTGRES_CONTAINER_PORT = 5432
+
+
 def container_name(service: str) -> str:
     """The platform container name for one of `ALL_SERVICES`, e.g. 'postgres'
     -> 'stx-postgres' — matches `compose.platform.yaml`'s own

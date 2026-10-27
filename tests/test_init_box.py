@@ -332,6 +332,24 @@ class TestRunSetupScripts:
             if line.startswith("CMD:"):
                 assert "'" not in line.removeprefix("CMD:")
 
+    def test_script_runs_on_the_images_path_not_the_pinned_one(self, tmp_path):
+        log_file = tmp_path / "setup.log"
+        result = _run(
+            self._SU_STUB
+            + "_IMAGE_PATH=/opt/venv/bin:/usr/bin\n"
+            + 'STX_BOX_SETUP="hook.sh"\n'
+            + "STX_ZONE=trusted\n"
+            + "STX_BOX_USER=devuser\n"
+            + f'STX_SETUP_STATUS_FILE="{tmp_path / "status.json"}"\n'
+            + f'STX_SETUP_LOG_FILE="{log_file}"\n'
+            + "run_setup_scripts\n"
+        )
+        assert result.returncode == 0
+        log_lines = log_file.read_text().splitlines()
+        assert "ARG:/opt/venv/bin:/usr/bin" in log_lines
+        (cmd,) = [line for line in log_lines if line.startswith("CMD:")]
+        assert 'export PATH="$1"' in cmd
+
     def test_untrusted_zone_runs_no_scripts(self, tmp_path):
         status_file = tmp_path / "setup-status.json"
         result = _run(
@@ -451,6 +469,19 @@ class TestExecAsBoxUser:
         assert "ARG:bash" in lines
         assert "ARG:weird'script.sh" in lines
         assert "ARG:--flag" in lines
+
+    def test_runs_on_the_images_path_not_the_pinned_one(self):
+        result = _run(
+            self._SU_STUB
+            + "_IMAGE_PATH=/opt/venv/bin:/usr/bin\n"
+            + "STX_BOX_USER=devuser\n"
+            + "_exec_as_box_user python -m app\n"
+        )
+        assert result.returncode == 0
+        lines = result.stdout.splitlines()
+        assert lines.index("ARG:/opt/venv/bin:/usr/bin") < lines.index("ARG:python")
+        (cmd,) = [line for line in lines if line.startswith("CMD:")]
+        assert 'export PATH="$1" && shift' in cmd
 
     def test_argv_never_spliced_into_cmd_text(self):
         result = _run(

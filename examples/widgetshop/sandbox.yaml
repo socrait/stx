@@ -18,7 +18,7 @@ platform:                         # shared services this repo uses; each omitted
   otel: true                           # OTLP collector at stx-otel:4318
 provision:                        # one-shot `compose run --rm <box>`, in order
   steps:
-    - [bash, scripts/provision-roles.sh]
+    - [bash, scripts/box-provision.sh]
     - [python, -m, widgetshop.scripts.create, --database, "{db}"]
     - [python, -m, widgetshop.scripts.create, --database, "{db}_test"]
     - [python, -m, widgetshop.scripts.migrate, --database, "{db}"]
@@ -28,7 +28,6 @@ provision:                        # one-shot `compose run --rm <box>`, in order
 env:                               # rendered into the box service's environment
   DATABASE_DB: "{db}"
   DATABASE_TEST_DB: "{db}_test"
-  DATABASE_HOST: stx-postgres
   REDIS_DB: "{redis_index}"
   OTLP_ENDPOINT: http://stx-otel:4318
   PUBLIC_BASE_URL: "http://api.{slug}.localhost"

@@ -76,6 +76,14 @@ def config_path() -> Path:
     return Path(xdg_config_home) / "stx" / "config.toml"
 
 
+def config_path_origin() -> str:
+    """Which setting decided `config_path`: the variable's name, or `default`."""
+    for name in (_CONFIG_PATH_ENV, "XDG_CONFIG_HOME"):
+        if os.environ.get(name):
+            return name
+    return "default"
+
+
 def default_dotenv_path() -> Path:
     """The default dotenv secret file, beside config.toml under $XDG_CONFIG_HOME/stx."""
     return config_path().parent / "secrets.env"

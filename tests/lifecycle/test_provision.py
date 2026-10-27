@@ -10,11 +10,13 @@ from stx.forge import ForgeCredential, ForgeCredentialKind
 from stx.lifecycle import provision as _prov
 from stx.lifecycle.spec import SandboxSpec
 from stx.manifest import (
+    PROVISION_ADMIN_VARS,
     ForgeManifest,
     Manifest,
     PackageRegistryManifest,
     ProvisionManifest,
 )
+from stx.platform import PostgresAdminParams
 
 
 def _manifest(tmp_path, **overrides) -> Manifest:
@@ -468,14 +470,17 @@ class TestRunProvisionSteps:
         assert compose_calls[0][0][-4:] == ["bash", "x.sh", "--db", "stx_my_slug"]
         assert compose_calls[0][1]["DATABASE_USER"] == "platform-admin"
         assert compose_calls[0][1]["OTHER_SECRET"] == "app-secret"
+        assert compose_calls[0][1]["PGUSER"] == "platform-admin"
         run_args = compose_calls[0][0]
         assert "STX_PROVISION_RUN=1" in run_args
         box_at = run_args.index("app", run_args.index("run"))
-        assert sorted(run_args[box_at - 4 : box_at]) == [
+        assert sorted(run_args[box_at - 6 : box_at]) == [
+            "-e",
             "-e",
             "-e",
             "DATABASE_USER",
             "OTHER_SECRET",
+            "PGUSER",
         ]
         assert compose_calls[1][0][-2:] == ["bash", "y.sh"]
 
@@ -538,6 +543,22 @@ class TestRunProvisionSteps:
         )
         assert result == 1
         assert "provisioning step failed" in capsys.readouterr().err
+
+
+class TestProvisionAdminVars:
+    def test_address_is_in_network_not_host_published(self):
+        admin = PostgresAdminParams(
+            host="localhost", port=15432, user="admin", password="pw"
+        )
+
+        result = _prov._provision_admin_vars(admin)
+
+        assert result["PGHOST"] == "stx-postgres"
+        assert result["PGPORT"] == "5432"
+        assert result["PGUSER"] == "stx_provisioner"
+        assert result["PGPASSWORD"] not in ("", "pw")
+        assert result["PGDATABASE"] == "postgres"
+        assert set(result) == set(PROVISION_ADMIN_VARS)
 
 
 class TestRenderOverlay:
